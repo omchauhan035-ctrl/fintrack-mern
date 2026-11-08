@@ -1,0 +1,252 @@
+================================================================================
+FINTRACK - PERSONAL FINANCE TRACKER (MERN STACK)
+COMPLETE VIVA VOCE & PROJECT DEFENSE GUIDE
+Student / Author: Om Chauhan (om40@gmail.com)
+================================================================================
+
+TABLE OF CONTENTS:
+1. 30-Second Elevator Pitch
+2. Motivation & Problem Statement
+3. Architecture & Tech Stack Justifications
+4. Database Architecture & Key Schemas
+5. Security & Performance Design
+6. 5-Minute Live Demo Step-by-Step Script
+7. Top 25 Viva Questions & Model Answers
+8. Future Scope & Conclusion
+
+--------------------------------------------------------------------------------
+1. 30-SECOND ELEVATOR PITCH (WHAT TO SAY FIRST)
+--------------------------------------------------------------------------------
+"Good morning respected examiners. My project is FinTrack, a full-stack personal
+finance and wealth management platform built using the MERN stack (MongoDB, Express,
+React 19, and Node.js) with Tailwind CSS.
+
+It empowers users to take full control of their money through automated expense
+tracking, real-time budget threshold warnings, visual savings goal ledgers, and
+interactive visual analytics.
+
+It is engineered with enterprise-grade security including HTTP-only cookie-based
+JWT authentication, integer-based currency precision in minor units to eliminate
+floating-point calculation errors, and an adaptive dark/light responsive design."
+
+--------------------------------------------------------------------------------
+2. MOTIVATION & PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+THE PROBLEM:
+- Scattered, unorganized finances across UPI, credit cards, bank transfers, and cash.
+- No real-time alerts when approaching or exceeding category budget limits.
+- Security flaws in conventional web apps (storing JWTs in localStorage exposes
+  them to XSS script theft).
+- Floating-point arithmetic rounding errors in web apps (0.1 + 0.2 = 0.30000000000000004).
+
+THE SOLUTION:
+- Unified Multi-Account Ledger: Track UPI, Net Banking, Card, and Cash in one place.
+- Dynamic Budget Guard: Visual cues (Green = Normal, Amber = 80%+ warning, Red = Exceeded).
+- Minor-Unit Financial Precision: All currency stored in minor units (paise: ₹1 = 100 paise)
+  ensuring 100% mathematical accuracy without rounding bugs.
+- Hardened Web Security: HttpOnly SameSite JWT cookies, bcrypt 12 salt rounds,
+  Helmet security headers, and express-rate-limit.
+
+--------------------------------------------------------------------------------
+3. ARCHITECTURE & TECH STACK JUSTIFICATIONS
+--------------------------------------------------------------------------------
+- Frontend: React 19 + Vite
+  Why? Ultra-fast Hot Module Replacement (HMR), virtual DOM performance, and component
+  modularity.
+- Styling: Tailwind CSS 4
+  Why? Zero runtime overhead, clean utility classes, and class-based dark mode engine.
+- Charts: Recharts
+  Why? Declarative, responsive SVG charting library built specifically for React.
+- Backend: Node.js + Express.js
+  Why? Non-blocking asynchronous event loop, fast RESTful endpoints, and modular middleware.
+- Database: MongoDB + Mongoose ODM
+  Why? Document-oriented JSON flexibility matching React state, aggregation pipelines,
+  and compound indexing for sub-millisecond queries.
+
+--------------------------------------------------------------------------------
+4. DATABASE DESIGN & KEY SCHEMAS
+--------------------------------------------------------------------------------
+1. Users Collection:
+   - name, email (unique, lowercase, trimmed), passwordHash (select: false),
+     preferredCurrency, theme.
+   - Pre-save hook automatically hashes passwords using bcrypt.genSalt(12).
+
+2. Transactions Collection:
+   - userId, title, amountMinor (Integer in paise), type (income/expense), category,
+     date, paymentMethod (upi/card/cash/etc), notes, tags.
+   - Compound Indexes: { userId: 1, date: -1 } and { userId: 1, type: 1, date: -1 }.
+
+3. Budgets Collection:
+   - userId, category, amountMinor, period (monthly/weekly/yearly), startDate, endDate.
+   - Calculated via MongoDB aggregation: $match on date and category, then $group with $sum.
+
+4. SavingsGoals & GoalContributions Collections:
+   - SavingsGoals stores high-level target and current saved amounts.
+   - GoalContributions stores timestamped deposits and withdrawals ledger.
+
+--------------------------------------------------------------------------------
+5. SECURITY & PERFORMANCE HIGHLIGHTS
+--------------------------------------------------------------------------------
+- XSS Prevention: JWT stored exclusively in HTTP-only cookies with sameSite: 'lax'.
+  JavaScript running in the browser cannot access or steal the token.
+- Password Security: 12-round bcrypt hashing; sensitive passwordHash hidden by default.
+- Rate Limiting: 100 requests per 15-minute window protects against brute-force attacks.
+- Input Normalization: Auto-trimming and lowercasing on all incoming email requests.
+- MongoDB Aggregation: All heavy calculations (monthly trends, category totals) execute
+  directly inside the database engine, not in Node.js RAM.
+
+--------------------------------------------------------------------------------
+6. 5-MINUTE LIVE DEMO SCRIPT (FOR THE EXAMINER)
+--------------------------------------------------------------------------------
+STEP 1: SHOW AUTHENTICATION & THEME TOGGLE
+- Open browser at http://localhost:5173.
+- Show that protected routes automatically redirect to /login.
+- Click the Sun / Moon button in the top right to show smooth dark/light mode toggle.
+
+STEP 2: LOGIN TO OM'S ACCOUNT
+- Enter: om40@gmail.com and password.
+- Click "Sign in". Show the toast message and instant redirection to Dashboard.
+
+STEP 3: WALK THROUGH THE DASHBOARD
+- Point out the 4 KPI cards: Net Balance, Total Income, Total Expenses, Savings Rate.
+- Hover over the Income vs Expenses Area Chart and Category Donut Chart.
+- Click the Timeframe Dropdown (top right) and switch between "This Month", "This Year",
+  and "All Time" to show instant recalculation of metrics.
+
+STEP 4: ADD A LIVE TRANSACTION
+- Click "+ Add Transaction".
+- Add an expense: "Team Lunch with Viva Examiners", Amount: 450, Category: "Food & Dining",
+  Payment Method: "UPI".
+- Click "Add Transaction". Show the updated balance and transaction feed immediately.
+
+STEP 5: SHOW BUDGETS & SAVINGS GOALS
+- Navigate to "Budgets" in sidebar. Show the category bars with threshold warnings.
+- Navigate to "Savings Goals". Show the "New Gaming & Workstation PC" and "Himalayan Roadtrip".
+- Click "Add Money", add ₹2,000, and watch the progress bar advance.
+
+STEP 6: SHOW MONGODB COMPASS (THE "PROVE IT" STEP)
+- Switch to MongoDB Compass on your desktop.
+- Open the database `finance-tracker` -> `transactions`.
+- Show the newly created transaction stored with `amountMinor: 45000` (paise).
+
+--------------------------------------------------------------------------------
+7. TOP 25 VIVA QUESTIONS & MODEL ANSWERS
+--------------------------------------------------------------------------------
+Q1: What is the MERN stack?
+A1: MERN stands for MongoDB, Express.js, React, and Node.js. It enables end-to-end
+JavaScript development across database, server, and client layers.
+
+Q2: Why store currency in minor units (paise) instead of decimal floats?
+A2: Standard floating-point numbers in JavaScript introduce binary precision errors
+(e.g., 0.1 + 0.2 = 0.30000000000000004). Minor units (integers) guarantee 100%
+mathematical accuracy for all additions, subtractions, and aggregations.
+
+Q3: Why use HTTP-only cookies for JWT instead of localStorage?
+A3: localStorage is accessible to any JavaScript running on the page, making it
+vulnerable to Cross-Site Scripting (XSS) token theft. HTTP-only cookies cannot be
+read via document.cookie, making them secure against script injection.
+
+Q4: How does MongoDB calculate budget spending efficiently?
+A4: Using MongoDB Aggregation Pipelines ($match and $group with $sum). Calculations
+occur directly within the database server, minimizing network transfer and Node.js memory.
+
+Q5: What are Mongoose Indexes and which ones did you create?
+A5: Indexes are B-tree structures that speed up document search. We created compound
+indexes on { userId: 1, date: -1 } and { userId: 1, type: 1, date: -1 }.
+
+Q6: How does password hashing work in your system?
+A6: Using bcryptjs with 12 salt rounds inside a Mongoose pre('save') hook. Each password
+is combined with a random cryptographic salt before hashing.
+
+Q7: What does `select: false` mean in the Mongoose User schema?
+A7: It prevents the passwordHash field from being returned in query results by default,
+ensuring hashed passwords are never accidentally leaked in API responses.
+
+Q8: What is Vite and why is it better than Create React App?
+A8: Vite uses native ES modules during development and Esbuild for bundling, providing
+sub-second cold server starts and instant Hot Module Replacement (HMR).
+
+Q9: How does dark mode work in this application?
+A9: A custom ThemeContext toggles the `.dark` class on the <html> tag, saved in
+localStorage. Tailwind CSS v4's `@custom-variant dark` activates dark styles automatically.
+
+Q10: What is CORS and how did you configure it?
+A10: Cross-Origin Resource Sharing. Configured in Express to allow http://localhost:5173
+with credentials: true so cookies are securely transmitted.
+
+Q11: What is the difference between SQL and NoSQL for this project?
+A11: SQL is rigid and relational. NoSQL (MongoDB) provides JSON-like document flexibility,
+dynamic category tags, and nested transaction records without complex table joins.
+
+Q12: How are protected routes implemented in React?
+A12: Using a custom <ProtectedRoute> component that checks AuthContext state. If not
+authenticated, it issues a <Navigate to="/login" replace /> redirect.
+
+Q13: How does the system handle overlapping budgets?
+A13: The budget controller performs a pre-insert check looking for any existing budget
+with the same category and overlapping start/end dates. If found, it returns HTTP 409 Conflict.
+
+Q14: How do you prevent withdrawals greater than saved funds?
+A14: Both client-side validation (in the contribution modal form) and server-side validation
+(in goalController.addWithdrawal checking amountMinor <= goal.currentAmountMinor).
+
+Q15: What is Helmet middleware?
+A15: An Express security package that automatically sets secure HTTP headers including
+X-Frame-Options, Strict-Transport-Security, and Content-Security-Policy.
+
+Q16: What is express-rate-limit?
+A16: Middleware that throttles repeated API requests from an IP address to prevent
+Denial of Service (DoS) and brute-force attacks.
+
+Q17: How is transaction pagination handled?
+A17: Server-side pagination using MongoDB's `.skip((page - 1) * limit)` and `.limit(limit)`.
+
+Q18: What is the difference between HTTP 401 and 403?
+A18: 401 Unauthorized means authentication credentials are missing or invalid.
+403 Forbidden means the identity is known, but access to the resource is denied.
+
+Q19: Why use React Hook Form?
+A19: It utilizes uncontrolled components and refs, preventing re-renders on every keystroke
+and significantly boosting form performance.
+
+Q20: How do you handle centralized errors in Express?
+A20: Controllers pass errors to `next(err)`. Our custom error-handling middleware catches
+them, maps status codes, and formats clean JSON error responses.
+
+Q21: What role does Recharts play?
+A21: It renders responsive SVG charts (Area and Donut) for cashflow comparisons and category
+breakdowns with interactive tooltips.
+
+Q22: Can the application support international currencies?
+A22: Yes. The user schema stores preferredCurrency, and frontend amounts are formatted
+using JavaScript's native Intl.NumberFormat.
+
+Q23: How does logout work with HTTP-only cookies?
+A23: The client calls POST /api/auth/logout. The server clears the cookie by setting
+its expiration date to the past (new Date(0)).
+
+Q24: What is a compound index?
+A24: An index on multiple fields together (e.g. userId + date), allowing MongoDB to locate
+and sort records in a single fast traversal without sorting in memory.
+
+Q25: How would you scale this to 100,000 active users?
+A25: Add a Redis caching layer for dashboard stats, use MongoDB replica sets, deploy
+Node.js behind an NGINX load balancer, and serve assets via a CDN.
+
+--------------------------------------------------------------------------------
+8. FUTURE SCOPE & CONCLUSION
+--------------------------------------------------------------------------------
+FUTURE SCOPE:
+1. Automated bank transaction syncing via Open Banking / Account Aggregator APIs.
+2. AI-driven financial suggestions for personalized savings advice.
+3. Automated monthly financial statements exported as PDF or Excel.
+4. Recurring subscription management with scheduled cron notifications.
+
+CONCLUSION:
+FinTrack is a robust, full-featured personal finance management platform combining
+modern software architecture, rigorous data security, and thoughtful UX to solve
+the universal problem of personal money management.
+
+================================================================================
+END OF GUIDE - ALL THE BEST WITH YOUR VIVA VOCE!
+================================================================================
